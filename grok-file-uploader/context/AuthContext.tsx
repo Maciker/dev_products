@@ -24,7 +24,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           setUser(null);
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        console.error('Failed to fetch user:', error);
         setUser(null);
       }
     };
@@ -46,10 +47,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Invalid credentials');
     }
   };
-
-  const logout = async () => {
-    await fetch('/api/auth/logout');
+const logout = async () => {
+  try {
+    const res = await fetch('/api/auth/logout');
+    if (!res.ok) {
+      throw new Error('Logout failed');
+    }
     setUser(null);
+    router.push('/login');
+  } catch (error: unknown) {
+    console.error('Failed to logout:', error);
+    throw new Error('Logout failed. Please try again.');
+  }
     router.push('/login');
   };
 
