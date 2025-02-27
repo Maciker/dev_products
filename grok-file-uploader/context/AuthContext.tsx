@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 
 interface AuthContextType {
   user: { id: number; username: string } | null;
+  loading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -11,6 +12,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<{ id: number; username: string } | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   // Check authentication status on mount
@@ -27,6 +29,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error: unknown) {
         console.error('Failed to fetch user:', error);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
@@ -63,7 +67,7 @@ const logout = async () => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
   );
 };
 
