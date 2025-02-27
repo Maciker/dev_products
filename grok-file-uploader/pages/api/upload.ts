@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import formidable, { File } from 'formidable';
-import fs from 'fs';
+import formidable from 'formidable';
 import path from 'path';
 import db from '../../lib/db';
 import jwt from 'jsonwebtoken';
@@ -55,6 +54,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ message: 'File uploaded successfully' });
     });
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
+    return res.status(401).json({ message: 'Invalid token', error });
   }
 }
