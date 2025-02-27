@@ -11,7 +11,8 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       await login(username, password);
-    } catch (err) {
+    } catch (error) {
+      console.error('Invalid credentials', error);
       setError('Invalid credentials');
     }
   };
