@@ -1,8 +1,18 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
+interface FileData {
+  id: string;
+  filename: string;
+  uploadDate: string;
+}
+
+interface FilesResponse {
+  files: FileData[];
+}
+
 const FileList: React.FC = () => {
-  const { data, error, isLoading } = useQuery<{ files: any[] }>({
+  const { data, error, isLoading } = useQuery<FilesResponse, Error>({
     queryKey: ['files'],
     queryFn: async () => {
       const res = await fetch('/api/files');
