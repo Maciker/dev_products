@@ -1,2 +1,1 @@
-# dev_projects
-Web Development projects. 
+# One Week, 1 Product
