@@ -2,17 +2,30 @@
 import { v4 as uuidv4 } from 'uuid';
 
 // Type definitions
-type OsintQuery = {
+// Export type definitions
+export type OsintQuery = {
   type: 'domain' | 'email' | 'person';
   value: string;
 };
 
-type OsintResult = {
+// Define and export allowed data value types
+export type DataValue = string | number | boolean | string[] | number[] | Record<string, string>;
+
+// Define and export the structure of our OSINT results
+export type OsintResult = {
   id: string;
   title: string;
   category: string;
-  data: Record<string, any>;
+  data: Record<string, DataValue>;
 };
+
+// Export API response interface
+export interface ApiOsintResult {
+  id?: string;
+  title?: string;
+  category?: string;
+  data?: Record<string, DataValue>;
+}
 
 // Mock data for demonstration
 // In a real application, this would call actual APIs
@@ -247,20 +260,45 @@ const getMockPersonResults = (name: string): OsintResult[] => [
   }
 ];
 
+// Get API endpoint from environment variables
+const API_ENDPOINT = import.meta.env.VITE_OSINT_API_ENDPOINT;
+
+if (!API_ENDPOINT) {
+  throw new Error('VITE_OSINT_API_ENDPOINT environment variable is not defined');
+}
+
 // Service function to perform OSINT search
 export const performOsintSearch = async (query: OsintQuery): Promise<OsintResult[]> => {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Return mock data based on query type
-  switch (query.type) {
-    case 'domain':
-      return getMockDomainResults(query.value);
-    case 'email':
-      return getMockEmailResults(query.value);
-    case 'person':
-      return getMockPersonResults(query.value);
-    default:
-      return [];
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: query.type,
+        value: query.value
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Transform API response to match our OsintResult type
+    // Note: This assumes the API returns data in a compatible format
+    // You may need to adjust this transformation based on the actual API response
+    return data.map((item: ApiOsintResult): OsintResult => ({
+      id: item.id || uuidv4(),
+      title: item.title || 'Unknown',
+      category: item.category || 'General',
+      data: item.data || {}
+    }));
+
+  } catch (error) {
+    console.error('Error performing OSINT search:', error);
+    throw error;
   }
 };

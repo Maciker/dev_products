@@ -1,43 +1,42 @@
-
 import React, { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useMutation } from '@tanstack/react-query';
 import OsintForm from '@/components/OsintForm';
 import OsintResults from '@/components/OsintResults';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AnimatedLogo from '@/components/AnimatedLogo';
-import { performOsintSearch } from '@/lib/osintService';
+import { performOsintSearch, OsintResult, OsintQuery } from '@/lib/osintService';
 
 const Index = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
-  const [query, setQuery] = useState<null | { type: 'domain' | 'email' | 'person', value: string }>(null);
+  const [results, setResults] = useState<OsintResult[]>([]);
+  const [query, setQuery] = useState<OsintQuery | null>(null);
 
-  const handleSubmit = async (type: 'domain' | 'email' | 'person', value: string) => {
-    setIsLoading(true);
-    setResults([]);
-    
-    try {
-      const searchResults = await performOsintSearch({ type, value });
-      
+  const { mutate: searchOsint, isPending } = useMutation({
+    mutationFn: performOsintSearch,
+    onSuccess: (searchResults) => {
       setResults(searchResults);
-      setQuery({ type, value });
-      
       toast({
         title: "Search completed",
-        description: `Found ${searchResults.length} results for ${type}: ${value}`,
+        description: `Found ${searchResults.length} results for ${query?.type}: ${query?.value}`,
       });
-      
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       console.error('Search error:', error);
+      setResults([]);
       toast({
         title: "Search failed",
-        description: "There was an error processing your search",
+        description: error.message || "There was an error processing your search",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
+  });
+
+  const handleSubmit = (type: 'domain' | 'email' | 'person', value: string) => {
+    const newQuery = { type, value };
+    setQuery(newQuery);
+    setResults([]);
+    searchOsint(newQuery);
   };
 
   return (
@@ -55,13 +54,13 @@ const Index = () => {
       </header>
 
       <main className="w-full max-w-6xl mx-auto flex flex-col flex-grow space-y-12 pb-12">
-        <OsintForm 
-          onSubmit={handleSubmit} 
-          isLoading={isLoading} 
+        <OsintForm
+          onSubmit={handleSubmit}
+          isLoading={isPending}
           className="animate-fade-in"
         />
         
-        {isLoading && (
+        {isPending && (
           <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
             <LoadingSpinner size="lg" className="mb-6" />
             <p className="text-muted-foreground animate-pulse-subtle">
@@ -70,14 +69,14 @@ const Index = () => {
           </div>
         )}
         
-        {!isLoading && results.length > 0 && (
-          <OsintResults 
-            results={results} 
-            query={query} 
+        {!isPending && results.length > 0 && (
+          <OsintResults
+            results={results}
+            query={query}
           />
         )}
         
-        {!isLoading && results.length === 0 && query && (
+        {!isPending && results.length === 0 && query && (
           <div className="text-center py-12 animate-fade-in">
             <h3 className="text-xl font-medium mb-2">No results found</h3>
             <p className="text-muted-foreground">
