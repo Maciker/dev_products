@@ -1,4 +1,4 @@
-# One Week, 1 Prodcut: OSINT Report Platform
+# OSINT Report Platform
 
 ## Product info
 
